@@ -70,7 +70,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: docker/setup-buildx-action@v3
       - name: Build backend test image (compiles Vampire and Otter; cached)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: backend/Dockerfile
@@ -82,7 +82,7 @@ jobs:
       - name: Full test suite with SPASS, Vampire and Otter
         run: docker run --rm fvp-backend:test
       - name: Build runtime image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: backend/Dockerfile
@@ -91,7 +91,7 @@ jobs:
           load: true
           cache-from: type=gha,scope=backend
       - name: Build web image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: frontend/Dockerfile
