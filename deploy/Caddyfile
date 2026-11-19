@@ -1,0 +1,48 @@
+# HTTPS entry point: serves the React app and proxies /api to Flask.
+# Certificates are automatic (Let's Encrypt for a real domain, a local CA for localhost).
+{$DOMAIN} {
+	encode zstd gzip
+
+	@assets path /assets/*
+	@pages not path /assets/* /api/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+	header @pages Cache-Control "no-cache"
+
+	handle /api/* {
+		request_body {
+			max_size 256KB
+		}
+		reverse_proxy backend:8000 {
+			health_uri /api/health
+			health_interval 15s
+			# Verification can take up to MAX_TIME_LIMIT seconds per request.
+			transport http {
+				read_timeout 120s
+			}
+		}
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	# "?" sets a header only if the backend did not already set a stricter one.
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains"
+		?X-Content-Type-Options "nosniff"
+		?X-Frame-Options "DENY"
+		?Referrer-Policy "no-referrer"
+		?Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		?Cross-Origin-Opener-Policy "same-origin"
+		?Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		-Server
+		-Via
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}
